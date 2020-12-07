@@ -17,14 +17,16 @@ class node
         string name;
         node*parent;
         int dist;
-        vector<node*> adj;
-        //keeps track of direction of the arrows
-        vector<bool> dir;
+        
+        
         
     public:
+    vector<node*> adj;
+    //keeps track of direction of the arrows
+        vector<bool> dir;
         static int timer;
-        int numer;
-        int denom;
+        int numer = 0;
+        int denom = 0;
         node( string name );
         node( string name, string color );
         node( string n, int d, node *p, vector<node*> a );
@@ -40,7 +42,7 @@ class node
         void setColor( string c );
         
         void addNeighbor( node * n);
-        void addNeighbor( node * n, bool direction );
+        void addNeighbor( node * n, bool d1, bool d2 );
         void deleteNeighbor( node n );
 };
 
@@ -84,21 +86,26 @@ int node::timer = 0;
 
 void DFS_Visit( node* n )
 {
+    node::timer++;
     n->numer = node::timer;
-    for (auto& adj : n->getAdj() ) 
+    for ( int i = 0; i < n->getAdj().size(); i++ ) 
     { 
-        if ( adj->getParent() == NULL )
+        
+        if ( n->adj[i]->getParent() == NULL && n->dir[i] )
         {
-            adj->setParent( n );
-            DFS_Visit( adj );
+            n->adj[i]->setParent( n );
+            DFS_Visit( n->adj[i] );
         }
-        else if ( adj->denom == 0 )
+        else if ( n->adj[i]->denom == 0 && n->dir[i] )
         {
             cout<<"Cycle detected, topological sort is impossible "<<endl;
+            exit(0);
         }
+        
     }
     node::timer++;
     n->denom = node::timer;
+    cout<<n->getName()<<" "<<n->numer<<"/"<<n->denom<<endl;
 
     
 }
@@ -107,10 +114,10 @@ void DFS( vector<node*> v)
 {
     node nullNode( "NULL" );
     for (auto& eachNode : v) { 
-        
         if ( eachNode->getParent() == NULL )
         {
             eachNode->setParent( &nullNode );
+            DFS_Visit( eachNode );
         }
     } 
 }
@@ -147,47 +154,30 @@ int main()
     graph.push_back( &g );
     
     
-    // Practice Graph from Lab 7 p 1
-    // node h = node( "h" );
-    // graph.push_back( &h );
-    // a.addNeighbor( &c );
-    // a.addNeighbor( &d );
-    // b.addNeighbor( &c );
-    // b.addNeighbor( &e );
-    // c.addNeighbor( &d );
-    // d.addNeighbor( &e ); 
-    // d.addNeighbor( &f );
-    // e.addNeighbor( &f );
-    // f.addNeighbor( &h );
-    
     //Graph 1
-    a.addNeighbor( &b, true );
-    a.addNeighbor( &c, true );
-    a.addNeighbor( &d, true );
-    b.addNeighbor( &d, true );
-    c.addNeighbor( &d, true );
-    d.addNeighbor( &e, true ); 
-    e.addNeighbor( &f, false );
-    e.addNeighbor( &g, true );
+    // a.addNeighbor( &b, true, false );
+    // a.addNeighbor( &c, true, false );
+    // a.addNeighbor( &d, true, false );
+    // b.addNeighbor( &d, true, false );
+    // c.addNeighbor( &d, true, false );
+    // d.addNeighbor( &e, true, false ); 
+    // e.addNeighbor( &f, false, true );
+    // e.addNeighbor( &g, true, false );
     
     //Graph 2
-    // a.addNeighbor( &b );
-    // a.addNeighbor( &c );
-    // b.addNeighbor( &c );
-    // b.addNeighbor( &d );
-    // b.addNeighbor( &e );
-    // c.addNeighbor( &e );
-    // d.addNeighbor( &e ); 
-    // d.addNeighbor( &f ); 
-    // e.addNeighbor( &b );
-    // e.addNeighbor( &f );
+    a.addNeighbor( &b, true, false );
+    a.addNeighbor( &c, true, false );
+    b.addNeighbor( &c, true, false );
+    b.addNeighbor( &d, true, false );
+    b.addNeighbor( &e, true, true );
+    c.addNeighbor( &e, true, false );
+    d.addNeighbor( &e, false, true ); 
+    d.addNeighbor( &f, true, false ); 
+    e.addNeighbor( &f, false, true );
     
-    //vector<node*> topo;
+    printAdjMatrix( graph );
     DFS( graph );
    
-    printAdjMatrix( graph );
-    
-    //printTopological( topo );
 
     return 0;
 }
@@ -206,8 +196,7 @@ node::node( string n, string c )
 {
     name = n;
     color = c;
-    numer = 0;
-    denom = 0;
+
 }
 
 node::node( string n , int d, node *p, vector<node*> a )
@@ -215,8 +204,7 @@ node::node( string n , int d, node *p, vector<node*> a )
     name = n;
     dist = d;
     parent = p;
-    numer = 0;
-    denom = 0;
+
     for ( int i = 0; i < a.size(); i ++ )
     {
         adj.push_back( a.at(i) );
@@ -272,13 +260,16 @@ void node::addNeighbor( node * n )
     
 }
 
-void node::addNeighbor( node * n, bool direction )
+void node::addNeighbor( node * n, bool d1, bool d2 )
 {
     adj.push_back( n );
-    //dir.push_back( direction );
+    
     
     n->adj.push_back( this );
-    //n->dir.push_back( !direction );
+    
+    dir.push_back( d1 );
+    n->dir.push_back( d2 );
     //cout<<"inaddneighbor n->getAdj().at(0) "<<(n->getAdj().at(0))<<endl;
     
 }
+
